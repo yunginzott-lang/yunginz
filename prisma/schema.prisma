@@ -1,0 +1,321 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BeatStatus {
+  DRAFT
+  PUBLISHED
+  SOLD
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  CLOSED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+enum FulfillmentStatus {
+  PENDING
+  PARTIAL
+  DELIVERED
+}
+
+enum ProductType {
+  BEAT_LICENSE
+  SOUND_KIT
+}
+
+enum SoundKitStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("OWNER")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  activityLogs AdminActivityLog[]
+}
+
+model Beat {
+  id               String       @id @default(cuid())
+  title            String
+  slug             String       @unique
+  producerName     String       @default("Yunginz")
+  previewMp3Url    String
+  coverImageUrl    String?
+  bpm              Int
+  durationSeconds  Int?
+  musicalKey       String
+  genre            String
+  mood             String
+  description      String?
+  status           BeatStatus   @default(DRAFT)
+  isFeatured       Boolean      @default(false)
+  playCount        Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  licenses         BeatLicense[]
+  orderItems       OrderItem[]
+  tags             BeatTag[]
+  exclusiveOffers  ExclusiveOffer[]
+}
+
+model SoundKit {
+  id                  String          @id @default(cuid())
+  title               String
+  slug                String          @unique
+  description         String?
+  priceCents          Int
+  coverImageUrl       String?
+  previewMp3Url       String?
+  downloadUrl         String
+  termsUrl            String?
+  termsPreviewText    String?
+  category            String?
+  tags                String?
+  status              SoundKitStatus  @default(DRAFT)
+  isFeatured          Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  orderItems          OrderItem[]
+}
+
+model BeatTag {
+  id        String   @id @default(cuid())
+  beatId     String
+  value      String
+  createdAt  DateTime @default(now())
+  beat       Beat     @relation(fields: [beatId], references: [id], onDelete: Cascade)
+
+  @@index([beatId])
+}
+
+model LicenseTemplate {
+  id                   String       @id @default(cuid())
+  code                 String       @unique
+  name                 String
+  description          String
+  priceCents           Int?
+  minOfferCents        Int?
+  active               Boolean      @default(true)
+  isExclusive          Boolean      @default(false)
+  sortOrder            Int          @default(0)
+  publicSummary        String[]
+  rightsJson           Json
+  contractPreviewRtf   String?
+  contractPreviewPlain String?
+  fileNotes            String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  beatLicenses         BeatLicense[]
+}
+
+model BeatLicense {
+  id                     String                    @id @default(cuid())
+  beatId                  String
+  licenseTemplateId       String
+  customName              String?
+  customDescription       String?
+  customPriceCents        Int?
+  active                  Boolean                  @default(true)
+  deliveryNotes           String?
+  fileNotes               String?
+  manualFulfillmentRequired Boolean                @default(false)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  beat                    Beat                     @relation(fields: [beatId], references: [id], onDelete: Cascade)
+  licenseTemplate         LicenseTemplate          @relation(fields: [licenseTemplateId], references: [id], onDelete: Cascade)
+  deliveryLinks           BeatLicenseDeliveryLink[]
+  orderItems              OrderItem[]
+
+  @@unique([beatId, licenseTemplateId])
+  @@index([beatId])
+}
+
+model BeatLicenseDeliveryLink {
+  id            String      @id @default(cuid())
+  beatLicenseId String
+  label         String
+  url           String
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  beatLicense   BeatLicense @relation(fields: [beatLicenseId], references: [id], onDelete: Cascade)
+
+  @@index([beatLicenseId])
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  address     String?
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+}
+
+model Order {
+  id                 String            @id @default(cuid())
+  publicId           String            @unique
+  customerId         String
+  status             OrderStatus       @default(PENDING)
+  fulfillmentStatus  FulfillmentStatus @default(PENDING)
+  paymentProvider    String            @default("PAYPAL")
+  paypalOrderId      String?           @unique
+  currency           String            @default("USD")
+  subtotalCents      Int
+  amountPaidCents    Int?
+  buyerNotes         String?
+  deliveryEmailSentAt DateTime?
+  capturedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  customer           Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items              OrderItem[]
+  paymentEvents      PaymentEvent[]
+
+  @@index([customerId])
+}
+
+model OrderItem {
+  id                       String      @id @default(cuid())
+  orderId                   String
+  productType               ProductType @default(BEAT_LICENSE)
+  beatId                    String?
+  beatLicenseId             String?
+  soundKitId                String?
+  beatTitleSnapshot         String
+  licenseNameSnapshot       String
+  priceCentsSnapshot        Int
+  deliveryNotesSnapshot     String?
+  fileNotesSnapshot         String?
+  publicSummarySnapshot     String[]
+  rightsJsonSnapshot        Json
+  deliveryLinksSnapshot     Json
+  soundKitTitleSnapshot     String?
+  soundKitDescriptionSnapshot String?
+  soundKitDownloadUrlSnapshot String?
+  soundKitTermsUrlSnapshot  String?
+  soundKitTermsTextSnapshot String?
+  soundKitCoverImageUrlSnapshot String?
+  manualFulfillmentRequired Boolean     @default(false)
+  createdAt                 DateTime    @default(now())
+  order                     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  beat                      Beat?       @relation(fields: [beatId], references: [id], onDelete: SetNull)
+  beatLicense               BeatLicense? @relation(fields: [beatLicenseId], references: [id], onDelete: SetNull)
+  soundKit                  SoundKit?   @relation(fields: [soundKitId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+model PaymentEvent {
+  id         String   @id @default(cuid())
+  orderId     String?
+  provider    String   @default("PAYPAL")
+  eventType   String
+  providerId  String?
+  rawPayload  Json
+  createdAt   DateTime @default(now())
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+model ContactSubmission {
+  id          String        @id @default(cuid())
+  name        String
+  email       String
+  inquiryType String
+  subject     String
+  message     String
+  status      InquiryStatus @default(NEW)
+  createdAt   DateTime      @default(now())
+}
+
+model ExclusiveOffer {
+  id                String        @id @default(cuid())
+  beatId            String
+  name              String
+  email             String
+  phone             String?
+  offerAmountCents  Int
+  message           String?
+  status            InquiryStatus @default(NEW)
+  createdAt         DateTime      @default(now())
+  beat              Beat          @relation(fields: [beatId], references: [id], onDelete: Cascade)
+
+  @@index([beatId])
+}
+
+model SiteSettings {
+  id                     String   @id @default(cuid())
+  siteName               String
+  siteUrl                String
+  defaultSeoTitle        String
+  defaultSeoDescription  String
+  producerName           String
+  producerTagline        String
+  contactEmail           String
+  instagramUrl           String?
+  youtubeUrl             String?
+  soundcloudUrl          String?
+  xUrl                   String?
+  newsletterTitle        String?
+  newsletterDescription  String?
+  heroStats              Json
+  footerPolicies         Json
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model HomepageSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  title     String
+  subtitle  String?
+  content   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdminActivityLog {
+  id          String    @id @default(cuid())
+  adminUserId String
+  action      String
+  targetType  String
+  targetId    String?
+  targetLabel String?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, createdAt])
+}
