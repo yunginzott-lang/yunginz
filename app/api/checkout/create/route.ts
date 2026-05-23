@@ -97,6 +97,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const publicId = generatePublicOrderId();
+
     const customer = await prisma.customer.upsert({
       where: { email: parsed.data.customerEmail },
       update: {
@@ -110,11 +112,18 @@ export async function POST(request: Request) {
       }
     });
 
+    const paypalOrder = await createPaypalOrder({
+      orderId: publicId,
+      amountCents: subtotalCents,
+      description: `Yunginz order ${publicId}`
+    });
+
     const order = await prisma.order.create({
       data: {
-        publicId: generatePublicOrderId(),
+        publicId,
         customerId: customer.id,
         subtotalCents,
+        paypalOrderId: paypalOrder.id,
         buyerNotes: parsed.data.buyerNotes || null
       }
     });
@@ -165,19 +174,6 @@ export async function POST(request: Request) {
           manualFulfillmentRequired: false
         }))
       ]
-    });
-
-    const paypalOrder = await createPaypalOrder({
-      orderId: order.id,
-      amountCents: subtotalCents,
-      description: `Yunginz order ${order.publicId}`
-    });
-
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        paypalOrderId: paypalOrder.id
-      }
     });
 
     const approvalUrl = paypalOrder.links?.find((link: any) => link.rel === "approve")?.href;

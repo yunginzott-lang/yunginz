@@ -30,23 +30,13 @@ export async function getPublicSiteData(filters: CatalogFilters = {}) {
   const orderBy =
     filters.sort === "oldest"
       ? { createdAt: "asc" as const }
-      : filters.sort === "price-asc"
-        ? {
-            licenses: {
-              _count: "asc" as const
-            }
-          }
-        : filters.sort === "price-desc"
-          ? {
-              licenses: {
-                _count: "desc" as const
-              }
-            }
-          : filters.sort === "title"
-            ? { title: "asc" as const }
-            : { createdAt: "desc" as const };
+      : filters.sort === "price-asc" || filters.sort === "price-desc"
+        ? { createdAt: "desc" as const }
+        : filters.sort === "title"
+          ? { title: "asc" as const }
+          : { createdAt: "desc" as const };
 
-  const [beats, licenses, soundKits, sections, settings] = await Promise.all([
+  let [beats, licenses, soundKits, sections, settings] = await Promise.all([
     prisma.beat.findMany({
       where,
       orderBy,
@@ -144,6 +134,20 @@ export async function getPublicSiteData(filters: CatalogFilters = {}) {
         )
     }))
   );
+
+  if (filters.sort === "price-asc") {
+    beats = beats.sort((a, b) => {
+      const aPrice = Math.min(...a.licenses.map((l) => l.customPriceCents ?? l.licenseTemplate.priceCents ?? Infinity));
+      const bPrice = Math.min(...b.licenses.map((l) => l.customPriceCents ?? l.licenseTemplate.priceCents ?? Infinity));
+      return aPrice - bPrice;
+    });
+  } else if (filters.sort === "price-desc") {
+    beats = beats.sort((a, b) => {
+      const aPrice = Math.min(...a.licenses.map((l) => l.customPriceCents ?? l.licenseTemplate.priceCents ?? 0));
+      const bPrice = Math.min(...b.licenses.map((l) => l.customPriceCents ?? l.licenseTemplate.priceCents ?? 0));
+      return bPrice - aPrice;
+    });
+  }
 
   return { beats, licenses: resolvedLicenses, soundKits, sections, settings };
 }

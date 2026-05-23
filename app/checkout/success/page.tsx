@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { sendPaidOrderNotifications } from "@/lib/order-notifications";
 import { capturePaypalOrder } from "@/lib/paypal";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { createLeaseDownloadLink } from "@/lib/security";
 import { formatCurrency, getBaseUrl } from "@/lib/utils";
 
@@ -20,6 +22,28 @@ export default async function CheckoutSuccessPage({
 
   if (!token) {
     notFound();
+  }
+
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() || headersList.get("x-real-ip")?.trim() || "unknown";
+  const rateLimit = await enforceRateLimit({
+    action: `checkout-success:${token}`,
+    identifier: ip,
+    limit: 5,
+    windowMs: 1000 * 60 * 15
+  });
+
+  if (!rateLimit.allowed) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
+        <h1 className="text-6xl font-semibold uppercase text-[#f4efe7]">
+          Too many requests
+        </h1>
+        <p className="mt-4 text-2xl text-foreground/60">
+          Please wait a moment and try refreshing the page.
+        </p>
+      </main>
+    );
   }
 
   let order = await prisma.order.findUnique({
@@ -38,8 +62,17 @@ export default async function CheckoutSuccessPage({
     );
 
     if (amountPaidCents !== order.subtotalCents) {
-      throw new Error(
-        `Captured amount ${amountPaidCents} did not match order subtotal ${order.subtotalCents}.`
+      return (
+        <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
+          <div className="section-kicker">Payment issue</div>
+          <h1 className="mt-6 text-6xl font-semibold uppercase text-[#f4efe7]">
+            Amount mismatch
+          </h1>
+          <p className="mt-4 text-2xl text-foreground/60">
+            Your payment was processed but the captured amount doesn&apos;t match the order
+            total. Please contact support with your order reference.
+          </p>
+        </main>
       );
     }
 
