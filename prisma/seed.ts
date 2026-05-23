@@ -31,7 +31,7 @@ async function main() {
   const licenses = [
     {
       code: "basic",
-      name: "Basic",
+      name: "Premium",
       description: "MP3 lease for artists shaping a focused release with premium clarity.",
       priceCents: 3000,
       minOfferCents: null,
