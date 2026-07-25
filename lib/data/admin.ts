@@ -101,17 +101,6 @@ export async function getAdminDashboardData({
   };
 }
 
-export async function getAdminOrders() {
-  return prisma.order.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      customer: true,
-      items: true,
-      paymentEvents: { orderBy: { createdAt: "desc" } }
-    }
-  });
-}
-
 export async function getAdminSoundKitData() {
   const [soundKits, settings] = await Promise.all([
     prisma.soundKit.findMany({

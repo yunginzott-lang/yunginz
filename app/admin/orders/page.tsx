@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { requireAdmin } from "@/lib/auth/session";
-import { getAdminOrders } from "@/lib/data/admin";
+import { getAdminOrders } from "@/lib/data/orders";
 import { formatCurrency } from "@/lib/utils";
 import { updateOrderFulfillment, refundOrder, resendOrderEmail } from "./actions";
 
