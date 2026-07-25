@@ -21,8 +21,7 @@ async function getOrders() {
     orderBy: { createdAt: "desc" },
     include: {
       customer: true,
-      items: true,
-      paymentEvents: { orderBy: { createdAt: "desc" } }
+      items: true
     }
   });
 }
