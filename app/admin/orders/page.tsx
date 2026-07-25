@@ -6,7 +6,7 @@ import { Select } from "@/components/ui/select";
 import { requireAdmin } from "@/lib/auth/session";
 import { getAdminOrders } from "@/lib/data/admin";
 import { formatCurrency } from "@/lib/utils";
-import { updateOrderFulfillment, refundOrder, resendOrderEmail } from "@/app/admin/actions";
+import { updateOrderFulfillment, refundOrder, resendOrderEmail } from "./actions";
 
 export const dynamic = "force-dynamic";
 
