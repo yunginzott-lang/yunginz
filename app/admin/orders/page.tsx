@@ -1,12 +1,11 @@
 import Link from "next/link";
+import { OrderActions } from "@/components/admin/order-actions";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
-import { updateOrderFulfillment, refundOrder, resendOrderEmail } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -148,21 +147,15 @@ export default async function AdminOrdersPage() {
                           key={item.id}
                           className="rounded-2xl border border-white/10 px-4 py-3"
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <div className="text-base font-semibold text-[#f4efe7]">
-                                {item.beatTitleSnapshot}
-                              </div>
-                              <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/40">
-                                {item.productType === "SOUND_KIT"
-                                  ? "Sound kit"
-                                  : item.licenseNameSnapshot}{" "}
-                                &middot; {formatCurrency(item.priceCentsSnapshot)}
-                                {item.manualFulfillmentRequired
-                                  ? " (manual fulfillment)"
-                                  : ""}
-                              </div>
-                            </div>
+                          <div className="text-base font-semibold text-[#f4efe7]">
+                            {item.beatTitleSnapshot}
+                          </div>
+                          <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/40">
+                            {item.productType === "SOUND_KIT"
+                              ? "Sound kit"
+                              : item.licenseNameSnapshot}{" "}
+                            &middot; {formatCurrency(item.priceCentsSnapshot)}
+                            {item.manualFulfillmentRequired ? " (manual fulfillment)" : ""}
                           </div>
                         </div>
                       ))}
@@ -197,64 +190,13 @@ export default async function AdminOrdersPage() {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap gap-3 border-t border-white/10 pt-4">
-                    {order.status === "PAID" && (
-                      <>
-                        <form action={updateOrderFulfillment}>
-                          <input type="hidden" name="id" value={order.id} />
-                          <div className="flex items-center gap-2">
-                            <Select name="fulfillmentStatus" defaultValue={order.fulfillmentStatus}>
-                              <option value="PENDING">Pending</option>
-                              <option value="PARTIAL">Partial</option>
-                              <option value="DELIVERED">Delivered</option>
-                            </Select>
-                            <Button type="submit" variant="outline" size="sm">
-                              Update Fulfillment
-                            </Button>
-                          </div>
-                        </form>
-
-                        <form action={resendOrderEmail}>
-                          <input type="hidden" name="id" value={order.id} />
-                          <Button type="submit" variant="outline" size="sm">
-                            Resend Email
-                          </Button>
-                        </form>
-
-                        <form action={refundOrder}>
-                          <input type="hidden" name="id" value={order.id} />
-                          <input
-                            type="hidden"
-                            name="refundNote"
-                            value="Refund processed by store admin."
-                          />
-                          <Button
-                            type="submit"
-                            variant="outline"
-                            size="sm"
-                            className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-                            onClick={(e) => {
-                              if (
-                                !confirm(
-                                  `Refund ${formatCurrency(order.amountPaidCents ?? order.subtotalCents)} to ${order.customer.email}?`
-                                )
-                              ) {
-                                e.preventDefault();
-                              }
-                            }}
-                          >
-                            Issue Refund
-                          </Button>
-                        </form>
-                      </>
-                    )}
-
-                    {order.status === "REFUNDED" && (
-                      <div className="font-mono text-xs uppercase tracking-[0.22em] text-red-400">
-                        This order has been refunded.
-                      </div>
-                    )}
-                  </div>
+                  <OrderActions
+                    orderId={order.id}
+                    status={order.status}
+                    fulfillmentStatus={order.fulfillmentStatus}
+                    customerEmail={order.customer.email}
+                    amountCents={order.amountPaidCents ?? order.subtotalCents}
+                  />
                 </div>
               </details>
             ))}
