@@ -1,30 +1,14 @@
 import Link from "next/link";
-import {
-  refundOrder,
-  resendOrderEmail,
-  updateOrderFulfillment
-} from "@/app/admin/actions";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { requireAdmin } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { getAdminOrders } from "@/lib/data/admin";
 import { formatCurrency } from "@/lib/utils";
+import { updateOrderFulfillment, refundOrder, resendOrderEmail } from "@/app/admin/actions";
 
 export const dynamic = "force-dynamic";
-
-async function getOrders() {
-  return prisma.order.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      customer: true,
-      items: true
-    }
-  });
-}
 
 function statusBadge(status: string) {
   const colors: Record<string, string> = {
@@ -48,7 +32,7 @@ function fulfillmentBadge(status: string) {
 
 export default async function AdminOrdersPage() {
   await requireAdmin();
-  const orders = await getOrders();
+  const orders = await getAdminOrders();
 
   const totalRevenue = orders
     .filter((o) => o.status === "PAID")
