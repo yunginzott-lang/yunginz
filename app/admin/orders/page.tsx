@@ -11,12 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { requireAdmin } from "@/lib/auth/session";
+import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 async function getOrders() {
-  const { prisma } = await import("@/lib/prisma");
   return prisma.order.findMany({
     orderBy: { createdAt: "desc" },
     include: {
