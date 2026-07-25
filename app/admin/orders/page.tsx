@@ -220,32 +220,6 @@ export default async function AdminOrdersPage() {
                     </div>
                   )}
 
-                  <div>
-                    <div className="font-mono text-xs uppercase tracking-[0.22em] text-foreground/45 mb-3">
-                      Payment Events
-                    </div>
-                    <div className="space-y-2">
-                      {order.paymentEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          className="rounded-2xl border border-white/10 px-4 py-3 text-sm"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
-                              {event.eventType}
-                            </span>
-                            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/40">
-                              {new Date(event.createdAt).toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                      {!order.paymentEvents.length && (
-                        <div className="text-sm text-foreground/40">No payment events recorded.</div>
-                      )}
-                    </div>
-                  </div>
-
                   <div className="flex flex-wrap gap-3 border-t border-white/10 pt-4">
                     {order.status === "PAID" && (
                       <>
