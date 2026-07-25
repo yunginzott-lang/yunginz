@@ -129,15 +129,16 @@ export default async function CheckoutSuccessPage({
 
       <div className="mt-10 space-y-6">
         {order.items.map((item) => {
-          const links =
-            item.productType === "SOUND_KIT"
-              ? [
-                  {
-                    label: "ZIP Download",
-                    url: item.soundKitDownloadUrlSnapshot ?? ""
-                  }
-                ].filter((link) => Boolean(link.url))
-              : (item.deliveryLinksSnapshot as Array<{ label: string; url: string }>);
+          const links:
+            | Array<{ label: string; url: string }>
+            | undefined = item.productType === "SOUND_KIT"
+            ? [
+                {
+                  label: "ZIP Download",
+                  url: item.soundKitDownloadUrlSnapshot ?? ""
+                }
+              ].filter((link) => Boolean(link.url))
+            : (item.deliveryLinksSnapshot as Array<{ label: string; url: string }> | null) ?? undefined;
 
           return (
             <div key={item.id} className="border border-white/10 p-6">

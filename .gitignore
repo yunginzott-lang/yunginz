@@ -24,3 +24,6 @@ live-*.html
 admin-*.png
 tmp-*.png
 .github/workflows
+
+# Database backups (contain sensitive data)
+backups/

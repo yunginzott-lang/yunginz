@@ -4,7 +4,9 @@ import {
   Container,
   Head,
   Heading,
+  Hr,
   Html,
+  Link,
   Preview,
   Section,
   Text
@@ -107,30 +109,84 @@ export async function sendOrderEmail(args: {
       preview={`Your Yunginz order ${args.order.publicId} is ready`}
       title="Order Confirmed"
     >
-      <Text>Thanks {args.customerName}, your order has been locked in.</Text>
-      <Section>
-        {args.order.items.map((item) => (
-          <Text key={`${item.beatTitleSnapshot}-${item.licenseNameSnapshot}`}>
-            {item.productType === "SOUND_KIT"
-              ? `${item.beatTitleSnapshot} - Sound kit - ${formatCurrency(item.priceCentsSnapshot)}`
-              : `${item.beatTitleSnapshot} - ${item.licenseNameSnapshot} - ${formatCurrency(item.priceCentsSnapshot)}${item.manualFulfillmentRequired ? " - stems delivered manually" : ""}`}
-          </Text>
-        ))}
-      </Section>
-      {args.order.items.some((item) => item.productType === "SOUND_KIT") ? (
-        <Section>
-          {args.order.items
-            .filter((item) => item.productType === "SOUND_KIT")
-            .map((item) => (
-              <Text key={item.id}>
-                Download link: {item.soundKitDownloadUrlSnapshot ?? "Available in checkout"}
-              </Text>
-            ))}
-        </Section>
-      ) : null}
+      <Text>Thanks {args.customerName}, your purchase is complete.</Text>
       <Text>Order reference: {args.order.publicId}</Text>
-      <Text>Beat lease PDFs are attached to this email and can also be downloaded from the order success page.</Text>
-      <Text>Sound kit downloads are delivered directly in the secure delivery section after checkout.</Text>
+      <Hr />
+      <Section>
+        {args.order.items.map((item) => {
+          const deliveryLinks = item.productType === "BEAT_LICENSE"
+            ? (item.deliveryLinksSnapshot as Array<{ label: string; url: string }> | null)
+            : null;
+          return (
+            <div key={item.id} style={{ marginBottom: "20px" }}>
+              <Heading
+                as="h3"
+                style={{ color: "#f7c300", fontSize: "16px", marginBottom: "4px" }}
+              >
+                {item.beatTitleSnapshot}
+              </Heading>
+              <Text style={{ margin: "0 0 4px", fontSize: "14px", color: "#ccc" }}>
+                {item.productType === "SOUND_KIT"
+                  ? `Sound kit - ${formatCurrency(item.priceCentsSnapshot)}`
+                  : `${item.licenseNameSnapshot} - ${formatCurrency(item.priceCentsSnapshot)}${item.manualFulfillmentRequired ? " (stems delivered manually)" : ""}`}
+              </Text>
+              {deliveryLinks && deliveryLinks.length > 0 ? (
+                <div style={{ marginTop: "8px" }}>
+                  {deliveryLinks.map((link) => (
+                    <Link
+                      key={link.label}
+                      href={link.url}
+                      style={{
+                        display: "inline-block",
+                        padding: "8px 16px",
+                        margin: "4px 8px 4px 0",
+                        backgroundColor: "#f7c300",
+                        color: "#000",
+                        textDecoration: "none",
+                        borderRadius: "8px",
+                        fontSize: "13px",
+                        fontWeight: 600
+                      }}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+              {item.productType === "SOUND_KIT" && item.soundKitDownloadUrlSnapshot ? (
+                <div style={{ marginTop: "8px" }}>
+                  <Link
+                    href={item.soundKitDownloadUrlSnapshot}
+                    style={{
+                      display: "inline-block",
+                      padding: "8px 16px",
+                      backgroundColor: "#f7c300",
+                      color: "#000",
+                      textDecoration: "none",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                      fontWeight: 600
+                    }}
+                  >
+                    ZIP Download
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </Section>
+      <Hr />
+      <Text>
+        Beat lease PDFs are attached to this email and can also be downloaded from the order
+        success page.
+      </Text>
+      <Text>
+        Need help? Reply to this email or contact{" "}
+        <Link href="mailto:yunginzbeats@gmail.com" style={{ color: "#f7c300" }}>
+          yunginzbeats@gmail.com
+        </Link>
+      </Text>
     </BaseEmail>
   );
 

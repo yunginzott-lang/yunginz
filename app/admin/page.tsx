@@ -42,6 +42,9 @@ export default async function AdminDashboardPage({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Button asChild variant="outline">
+            <Link href="/admin/orders">Manage Orders</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href="/admin/content">Customize Website Content</Link>
           </Button>
           <Button asChild variant="outline">

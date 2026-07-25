@@ -83,6 +83,7 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
       })
       .filter((beat) => {
         const bpmValue = Number(beat.bpm ?? 0);
+        if (bpmValue === 0) return true;
         return bpmValue >= bpmMin && bpmValue <= bpmMax;
       });
 

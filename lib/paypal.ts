@@ -133,6 +133,62 @@ export async function capturePaypalOrder(paypalOrderId: string) {
   });
 }
 
+export async function refundPaypalCapture(args: {
+  paypalOrderId: string;
+  amountCents: number;
+  note?: string;
+}) {
+  return withPaypalEnvironment(async ({ baseUrl, token }) => {
+    const captureUrl = `${baseUrl}/v2/checkout/orders/${args.paypalOrderId}/capture`;
+    const captureResponse = await fetch(captureUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      cache: "no-store"
+    });
+
+    if (!captureResponse.ok) {
+      const text = await captureResponse.text();
+      throw new Error(`Unable to retrieve PayPal order for refund. ${text}`);
+    }
+
+    const captureData = await captureResponse.json();
+    const captureId = captureData.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+
+    if (!captureId) {
+      throw new Error("No capture found for this PayPal order.");
+    }
+
+    const refundResponse = await fetch(
+      `${baseUrl}/v2/payments/captures/${captureId}/refund`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          amount: {
+            currency_code: "USD",
+            value: (args.amountCents / 100).toFixed(2)
+          },
+          note_to_payer: args.note || "Your order has been refunded."
+        }),
+        cache: "no-store"
+      }
+    );
+
+    if (!refundResponse.ok) {
+      const text = await refundResponse.text();
+      throw new Error(`PayPal refund failed. ${text}`);
+    }
+
+    return refundResponse.json();
+  });
+}
+
 export async function verifyPaypalWebhook(headers: Headers, body: unknown) {
   const webhookId = (process.env.PAYPAL_WEBHOOK_ID || "").trim();
   if (!webhookId) {
