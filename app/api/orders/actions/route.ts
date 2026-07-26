@@ -52,36 +52,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No PayPal order ID" }, { status: 400 });
     }
 
-    const { refundPaypalCapture } = await import("@/lib/paypal");
-    const refundAmountCents = order.amountPaidCents ?? order.subtotalCents;
+    try {
+      const { refundPaypalCapture } = await import("@/lib/paypal");
+      const refundAmountCents = order.amountPaidCents ?? order.subtotalCents;
 
-    await refundPaypalCapture({
-      paypalOrderId: order.paypalOrderId,
-      amountCents: refundAmountCents,
-      note: refundNote || "Refund processed by store admin."
-    });
+      await refundPaypalCapture({
+        paypalOrderId: order.paypalOrderId,
+        amountCents: refundAmountCents,
+        note: refundNote || "Refund processed by store admin."
+      });
 
-    await prisma.order.update({
-      where: { id },
-      data: { status: "REFUNDED" }
-    });
+      await prisma.order.update({
+        where: { id },
+        data: { status: "REFUNDED" }
+      });
 
-    await prisma.paymentEvent.create({
-      data: {
-        orderId: id,
-        provider: "PAYPAL",
-        eventType: "REFUND.PROCESSED",
-        providerId: order.paypalOrderId,
-        rawPayload: {
-          refundNote: refundNote || "Refund processed by store admin.",
-          amountCents: refundAmountCents,
-          processedBy: session.user.email,
-          processedAt: new Date().toISOString()
+      await prisma.paymentEvent.create({
+        data: {
+          orderId: id,
+          provider: "PAYPAL",
+          eventType: "REFUND.PROCESSED",
+          providerId: order.paypalOrderId,
+          rawPayload: {
+            refundNote: refundNote || "Refund processed by store admin.",
+            amountCents: refundAmountCents,
+            processedBy: session.user.email,
+            processedAt: new Date().toISOString()
+          }
         }
-      }
-    });
+      });
 
-    return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown refund error";
+      console.error("Refund failed", { orderId: id, paypalOrderId: order.paypalOrderId, error: message });
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });

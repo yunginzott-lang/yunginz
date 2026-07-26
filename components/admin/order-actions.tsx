@@ -39,8 +39,11 @@ export function OrderActions({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...body })
     });
+    const data = await res.json();
     if (res.ok) {
       startTransition(() => router.refresh());
+    } else {
+      alert(data.error || "Action failed. Please try again.");
     }
   }
 

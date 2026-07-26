@@ -139,8 +139,8 @@ export async function refundPaypalCapture(args: {
   note?: string;
 }) {
   return withPaypalEnvironment(async ({ baseUrl, token }) => {
-    const captureUrl = `${baseUrl}/v2/checkout/orders/${args.paypalOrderId}/capture`;
-    const captureResponse = await fetch(captureUrl, {
+    const orderUrl = `${baseUrl}/v2/checkout/orders/${args.paypalOrderId}`;
+    const captureResponse = await fetch(orderUrl, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -151,14 +151,23 @@ export async function refundPaypalCapture(args: {
 
     if (!captureResponse.ok) {
       const text = await captureResponse.text();
-      throw new Error(`Unable to retrieve PayPal order for refund. ${text}`);
+      console.error("PayPal order fetch failed", {
+        paypalOrderId: args.paypalOrderId,
+        status: captureResponse.status,
+        body: text
+      });
+      throw new Error(`Unable to retrieve PayPal order for refund (${captureResponse.status}). ${text}`);
     }
 
     const captureData = await captureResponse.json();
     const captureId = captureData.purchase_units?.[0]?.payments?.captures?.[0]?.id;
 
     if (!captureId) {
-      throw new Error("No capture found for this PayPal order.");
+      console.error("No capture ID found", {
+        paypalOrderId: args.paypalOrderId,
+        purchaseUnits: captureData.purchase_units
+      });
+      throw new Error("No capture found for this PayPal order. The order may not have been captured yet.");
     }
 
     const refundResponse = await fetch(
