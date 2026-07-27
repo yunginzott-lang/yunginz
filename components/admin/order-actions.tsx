@@ -96,6 +96,20 @@ export function OrderActions({
       >
         Issue Refund
       </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={pending}
+        className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+        onClick={() => {
+          if (confirm(`Mark this order as refunded (no PayPal refund)? Use this if you already refunded manually.`)) {
+            handleAction("markRefunded", { id: orderId });
+          }
+        }}
+      >
+        Mark Refunded (Manual)
+      </Button>
     </div>
   );
 }

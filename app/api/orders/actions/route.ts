@@ -90,5 +90,28 @@ export async function POST(request: Request) {
     }
   }
 
+  if (action === "markRefunded") {
+    await prisma.order.update({
+      where: { id },
+      data: { status: "REFUNDED" }
+    });
+
+    await prisma.paymentEvent.create({
+      data: {
+        orderId: id,
+        provider: "INTERNAL",
+        eventType: "REFUND.MANUAL_MARK",
+        providerId: order.paypalOrderId,
+        rawPayload: {
+          note: "Manually marked as refunded by admin (refund was processed outside PayPal).",
+          processedBy: session.user.email,
+          processedAt: new Date().toISOString()
+        }
+      }
+    });
+
+    return NextResponse.json({ ok: true });
+  }
+
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });
 }
