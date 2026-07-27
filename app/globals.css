@@ -97,6 +97,7 @@ a {
   @apply relative mx-auto w-full max-w-5xl border border-white/10 bg-[rgba(12,12,18,0.8)] p-6 backdrop-blur-2xl md:p-8;
   box-shadow: 0 24px 100px rgba(0, 0, 0, 0.45);
   animation: modal-rise 0.24s ease-out;
+  overscroll-behavior: contain;
 }
 
 .glass-card {
