@@ -30,3 +30,4 @@ backups/
 tmp_*
 .DS_Store
 scripts/
+*.tsbuildinfo
