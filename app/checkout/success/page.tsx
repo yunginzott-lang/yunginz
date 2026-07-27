@@ -55,7 +55,9 @@ export default async function CheckoutSuccessPage({
     notFound();
   }
 
-  if (order.status !== "PAID") {
+  const safeOrder = order;
+
+  if (safeOrder.status !== "PAID") {
     let capture: Record<string, unknown> | null = null;
     let capturedSuccessfully = false;
     try {
@@ -86,26 +88,11 @@ export default async function CheckoutSuccessPage({
     }
 
     if (capturedSuccessfully && capture) {
-      if (!order) {
-        return (
-          <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
-            <div className="section-kicker">Payment issue</div>
-            <h1 className="mt-6 text-6xl font-semibold uppercase text-[#f4efe7]">
-              Something went wrong
-            </h1>
-            <p className="mt-4 text-2xl text-foreground/60">
-              Your payment was processed but we couldn&apos;t find your order. Please contact
-              support.
-            </p>
-          </main>
-        );
-      }
-
       const amountPaidCents = Math.round(
         Number((capture as any)?.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value ?? 0) * 100
       );
 
-      if (amountPaidCents !== order.subtotalCents) {
+      if (amountPaidCents !== safeOrder.subtotalCents) {
         return (
           <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
             <div className="section-kicker">Payment issue</div>
@@ -121,12 +108,12 @@ export default async function CheckoutSuccessPage({
       }
 
       const updated = await prisma.order.updateMany({
-        where: { id: order.id, status: "PENDING" },
+        where: { id: safeOrder.id, status: "PENDING" },
         data: {
           status: "PAID",
           amountPaidCents,
           capturedAt: new Date(),
-          fulfillmentStatus: order.items.some((item) => item.manualFulfillmentRequired)
+          fulfillmentStatus: safeOrder.items.some((item) => item.manualFulfillmentRequired)
             ? "PARTIAL"
             : "DELIVERED"
         }
@@ -134,9 +121,24 @@ export default async function CheckoutSuccessPage({
 
       if (updated.count > 0) {
         order = await prisma.order.findUnique({
-          where: { id: order.id },
+          where: { id: safeOrder.id },
           include: { customer: true, items: true }
-        })!;
+        });
+
+        if (!order) {
+          return (
+            <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
+              <div className="section-kicker">Payment issue</div>
+              <h1 className="mt-6 text-6xl font-semibold uppercase text-[#f4efe7]">
+                Something went wrong
+              </h1>
+              <p className="mt-4 text-2xl text-foreground/60">
+                Your payment was processed but we couldn&apos;t update your order. Please contact
+                support.
+              </p>
+            </main>
+          );
+        }
 
         const existingApprovalEvent = await prisma.paymentEvent.findFirst({
           where: {
@@ -160,10 +162,6 @@ export default async function CheckoutSuccessPage({
         await sendPaidOrderNotifications(order);
       }
     }
-  }
-
-  if (!order) {
-    notFound();
   }
 
   return (
