@@ -70,8 +70,6 @@ a {
 
 .section-shell {
   @apply relative overflow-hidden border-t border-white/5;
-  content-visibility: auto;
-  contain-intrinsic-size: 600px;
 }
 
 .section-kicker {
@@ -89,8 +87,9 @@ a {
 
 .modal-backdrop {
   @apply fixed inset-0 z-[120] bg-black/75 backdrop-blur-sm;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: modal-fade 0.22s ease-out;
 }
 
