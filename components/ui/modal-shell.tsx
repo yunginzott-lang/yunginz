@@ -43,15 +43,12 @@ export function ModalShell({
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
-        className={cn(
-          "modal-panel max-h-[85vh] w-full overflow-y-auto",
-          className
-        )}
+        className={cn("modal-panel", className)}
         onClick={(event) => event.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 shrink-0 rounded-full border border-white/10 p-2 text-primary transition hover:border-primary/50"
+          className="sticky right-0 top-0 z-10 ml-auto flex shrink-0 rounded-full border border-white/10 p-2 text-primary transition hover:border-primary/50"
           aria-label="Close modal"
         >
           <X className="h-4 w-4" />

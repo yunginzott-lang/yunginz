@@ -88,17 +88,18 @@ a {
 }
 
 .modal-backdrop {
-  @apply fixed inset-0 z-[120] overflow-y-auto bg-black/75 backdrop-blur-sm;
+  @apply fixed inset-0 z-[120] bg-black/75 backdrop-blur-sm;
   animation: modal-fade 0.22s ease-out;
 }
 
 .modal-panel {
-  @apply relative mx-auto w-full max-w-5xl border border-white/10 bg-[rgba(12,12,18,0.8)] p-6 backdrop-blur-2xl md:p-8;
+  @apply absolute left-1/2 top-1/2 w-full max-w-5xl border border-white/10 bg-[rgba(12,12,18,0.8)] p-6 backdrop-blur-2xl md:p-8;
+  transform: translate(-50%, -50%);
   box-shadow: 0 24px 100px rgba(0, 0, 0, 0.45);
   animation: modal-rise 0.24s ease-out;
   overscroll-behavior: contain;
-  margin-top: min(10vh, 80px);
-  margin-bottom: min(10vh, 80px);
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .glass-card {
@@ -120,12 +121,12 @@ a {
 @keyframes modal-rise {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: translate(-50%, calc(-50% + 20px)) scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
