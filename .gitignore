@@ -27,3 +27,6 @@ tmp-*.png
 
 # Database backups (contain sensitive data)
 backups/
+tmp_*
+.DS_Store
+scripts/

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/auth";
 import { getPaypalAccessToken } from "@/lib/paypal";
 
 export const dynamic = "force-dynamic";
