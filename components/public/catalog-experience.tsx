@@ -139,6 +139,16 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
       return;
     }
 
+    setQueue(
+      filteredBeats.map((b) => ({
+        id: b.id,
+        title: b.title,
+        previewMp3Url: normalizeDropboxPreviewUrl(b.previewMp3Url),
+        bpm: b.bpm,
+        durationSeconds: b.durationSeconds,
+        coverImageUrl: b.coverImageUrl
+      }))
+    );
     setActiveBeat(beat.id);
     setPlaying(true);
   }
@@ -378,8 +388,8 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
                 className="glass-card cursor-pointer rounded-[24px] border border-white/10 px-4 py-4 transition hover:border-primary/35 md:px-5"
                 onClick={() => openBeatDetails(beat)}
               >
-                <div className="lg:hidden">
-                  <div className="grid grid-cols-[44px_minmax(0,1fr)_70px_24px] items-center gap-2 overflow-hidden">
+                  <div className="lg:hidden">
+                    <div className="grid grid-cols-[44px_minmax(0,1fr)_70px_32px] items-center gap-2">
                     <button
                       type="button"
                       className="group flex items-center text-left"
@@ -432,7 +442,11 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
                         event.stopPropagation();
                         const shareUrl = `${window.location.origin}/#beats`;
                         if (navigator.share) {
-                          await navigator.share({ title: beat.title, url: shareUrl });
+                          await navigator.share({
+                            title: beat.title,
+                            text: `Check out "${beat.title}" on Yunginz`,
+                            url: shareUrl
+                          });
                         } else {
                           await navigator.clipboard.writeText(shareUrl);
                           toast.success("Beat link copied");

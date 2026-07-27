@@ -173,7 +173,7 @@ export function SoundKitsSection({
           {soundKits.map((kit) => (
             <Card
               key={kit.id}
-              className="glass-card snap-start overflow-hidden border-white/10"
+              className="glass-card snap-start overflow-hidden rounded-2xl border-white/10 transition hover:border-primary/35"
             >
               <CardContent className="flex h-full flex-col p-0">
                 <div className="group relative aspect-[1.02] w-full overflow-hidden border-b border-white/10 bg-black">
@@ -227,28 +227,29 @@ export function SoundKitsSection({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-2">
-                    <Button
-                      size="sm"
-                      className="col-span-2 h-8 w-full gap-1.5 px-2 text-xs"
-                      onClick={() => addKitToCart(kit)}
-                      aria-label={`Add ${kit.title} to cart for ${formatCurrency(kit.priceCents)}`}
-                    >
-                      <ShoppingBag className="h-4 w-4" />
-                      <span className="font-mono text-[11px]">{formatCurrency(kit.priceCents)}</span>
-                    </Button>
+                  <Button
+                    size="sm"
+                    className="w-full gap-1.5 text-xs"
+                    onClick={() => addKitToCart(kit)}
+                    aria-label={`Add ${kit.title} to cart for ${formatCurrency(kit.priceCents)}`}
+                  >
+                    <ShoppingBag className="h-4 w-4" />
+                    <span className="font-mono text-[11px]">{formatCurrency(kit.priceCents)}</span>
+                  </Button>
+
+                  <div className="grid grid-cols-2 gap-1.5">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 w-full whitespace-nowrap px-2 text-[9px] tracking-[0.08em]"
+                      className="h-8 w-full text-xs"
                       onClick={() => openKitPreview(kit, "description")}
                     >
-                      Desc
+                      Details
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 w-full whitespace-nowrap px-2 text-[9px] tracking-[0.08em]"
+                      className="h-8 w-full text-xs"
                       onClick={() => openKitPreview(kit, "terms")}
                     >
                       Terms
