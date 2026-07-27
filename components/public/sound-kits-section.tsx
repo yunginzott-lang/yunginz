@@ -147,7 +147,7 @@ export function SoundKitsSection({
               type="button"
               variant="outline"
               size="icon"
-              className="h-9 w-9"
+              className="hidden h-9 w-9 md:inline-flex"
               onClick={() => scrollKits("prev")}
               aria-label="Previous sound kits"
             >
@@ -157,7 +157,7 @@ export function SoundKitsSection({
               type="button"
               variant="outline"
               size="icon"
-              className="h-9 w-9"
+              className="hidden h-9 w-9 md:inline-flex"
               onClick={() => scrollKits("next")}
               aria-label="Next sound kits"
             >
@@ -168,7 +168,7 @@ export function SoundKitsSection({
 
         <div
           ref={carouselRef}
-          className="mt-8 grid auto-cols-[minmax(0,100%)] grid-flow-col gap-3 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] md:auto-cols-[calc((100%-48px)/5)] [&::-webkit-scrollbar]:hidden"
+          className="mt-8 grid auto-cols-[75%] grid-flow-col gap-3 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] md:auto-cols-[calc((100%-48px)/5)] [&::-webkit-scrollbar]:hidden"
         >
           {soundKits.map((kit) => (
             <Card
