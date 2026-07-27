@@ -1,5 +1,3 @@
-import { cache } from "react";
-
 import { getBaseUrl } from "@/lib/utils";
 
 type PaypalEnvironment = "live" | "sandbox";
@@ -16,7 +14,28 @@ function getEnvironmentOrder(): PaypalEnvironment[] {
     : ["sandbox", "live"];
 }
 
-export const getPaypalAccessToken = cache(async (environment: PaypalEnvironment) => {
+const tokenCache: Partial<Record<PaypalEnvironment, { token: string; expiresAt: number }>> = {};
+
+function getCachedToken(environment: PaypalEnvironment): string | null {
+  const entry = tokenCache[environment];
+  if (entry && Date.now() < entry.expiresAt) {
+    return entry.token;
+  }
+  delete tokenCache[environment];
+  return null;
+}
+
+function setCachedToken(environment: PaypalEnvironment, token: string, expiresInSeconds: number) {
+  tokenCache[environment] = {
+    token,
+    expiresAt: Date.now() + (expiresInSeconds - 60) * 1000
+  };
+}
+
+export async function getPaypalAccessToken(environment: PaypalEnvironment) {
+  const cached = getCachedToken(environment);
+  if (cached) return cached;
+
   const clientId = (process.env.PAYPAL_CLIENT_ID || "").trim();
   const clientSecret = (process.env.PAYPAL_CLIENT_SECRET || "").trim();
 
@@ -40,8 +59,9 @@ export const getPaypalAccessToken = cache(async (environment: PaypalEnvironment)
   }
 
   const payload = await response.json();
+  setCachedToken(environment, payload.access_token as string, payload.expires_in ?? 3600);
   return payload.access_token as string;
-});
+}
 
 async function withPaypalEnvironment<T>(
   action: (config: {

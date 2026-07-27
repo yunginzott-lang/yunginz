@@ -16,7 +16,7 @@ import {
   SkipForward,
   Volume2
 } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { OPEN_LICENSE_EVENT } from "@/lib/catalog-events";
@@ -28,6 +28,7 @@ export function StickyBeatPlayer() {
   const queueRef = useRef<any[]>([]);
   const activeIndexRef = useRef(-1);
   const durationFallbackRef = useRef(0);
+  const shouldPlayRef = useRef(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const [playerHidden, setPlayerHidden] = useState(false);
   const pathname = usePathname();
@@ -80,12 +81,17 @@ export function StickyBeatPlayer() {
 
     if (!audioRef.current) {
       audioRef.current = new Audio(activeBeat.previewMp3Url);
-      audioRef.current.preload = "metadata";
+      audioRef.current.preload = "auto";
       audioRef.current.volume = volume;
+      shouldPlayRef.current = isPlaying;
       setDuration(normalizeDuration(activeBeat.durationSeconds, 0));
       audioRef.current.addEventListener("loadedmetadata", () => {
         if (!audioRef.current) return;
         setDuration(normalizeDuration(audioRef.current.duration, durationFallbackRef.current));
+      });
+      audioRef.current.addEventListener("canplay", () => {
+        if (!audioRef.current || !shouldPlayRef.current) return;
+        audioRef.current.play().catch(() => setPlaying(false));
       });
       audioRef.current.addEventListener("timeupdate", () => {
         if (!audioRef.current) return;
@@ -111,6 +117,7 @@ export function StickyBeatPlayer() {
       audioRef.current.pause();
       audioRef.current.src = activeBeat.previewMp3Url;
       audioRef.current.load();
+      shouldPlayRef.current = isPlaying;
       setProgress(0);
       setCurrentTime(0);
       setDuration(normalizeDuration(activeBeat.durationSeconds, 0));
@@ -135,8 +142,12 @@ export function StickyBeatPlayer() {
   useEffect(() => {
     if (!audioRef.current || !activeBeat) return;
 
+    shouldPlayRef.current = isPlaying;
+
     if (isPlaying) {
-      audioRef.current.play().catch(() => setPlaying(false));
+      if (audioRef.current.readyState >= 2) {
+        audioRef.current.play().catch(() => setPlaying(false));
+      }
       return;
     }
 

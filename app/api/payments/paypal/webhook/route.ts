@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
   if (order && webhookBody.event_type === "PAYMENT.CAPTURE.COMPLETED") {
     const amountPaidCents = Math.round(Number(webhookBody.resource?.amount?.value ?? 0) * 100);
-    if (amountPaidCents !== order.subtotalCents) {
+    if (amountPaidCents < order.subtotalCents) {
       return NextResponse.json(
         { error: "Webhook amount did not match the order subtotal." },
         { status: 400 }
