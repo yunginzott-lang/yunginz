@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerAuthSession } from "@/auth";
 
-import { authOptions } from "@/auth";
 import { getPaypalAccessToken } from "@/lib/paypal";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuthSession();
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
