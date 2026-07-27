@@ -16,7 +16,7 @@ import {
   SkipForward,
   Volume2
 } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { OPEN_LICENSE_EVENT } from "@/lib/catalog-events";

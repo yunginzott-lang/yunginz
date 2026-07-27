@@ -57,16 +57,18 @@ export default async function CheckoutSuccessPage({
 
   if (order.status !== "PAID") {
     let capture: Record<string, unknown> | null = null;
+    let capturedSuccessfully = false;
     try {
       capture = await capturePaypalOrder(token);
+      capturedSuccessfully = true;
     } catch {
-      order = await prisma.order.findUnique({
+      const refreshedOrder = await prisma.order.findUnique({
         where: { paypalOrderId: token },
         include: { customer: true, items: true }
       });
 
-      if (order?.status === "PAID") {
-        // webhook already processed it
+      if (refreshedOrder?.status === "PAID") {
+        order = refreshedOrder;
       } else {
         return (
           <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
@@ -83,7 +85,7 @@ export default async function CheckoutSuccessPage({
       }
     }
 
-    if (order && capture) {
+    if (capturedSuccessfully && capture) {
       const amountPaidCents = Math.round(
         Number((capture as any)?.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value ?? 0) * 100
       );
