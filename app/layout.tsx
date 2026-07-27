@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     siteName: "YUNG1NZ",
     images: [
       {
-        url: "/media/yunginz-yellow-hero.jpg",
+        url: "/media/yunginz-yellow-hero.webp",
         width: 1200,
         height: 630,
         alt: "YUNG1NZ Producer Brand"
@@ -69,11 +69,10 @@ export const metadata: Metadata = {
     title: "YUNG1NZ | Beats, Recording, Mixing & Production",
     description:
       "Browse premium beats, secure licenses, and work directly with YUNG1NZ.",
-    images: ["/media/yunginz-yellow-hero.jpg"]
+    images: ["/media/yunginz-yellow-hero.webp"]
   },
   icons: {
     icon: "/media/logo.png",
-    shortcut: "/media/logo.png",
     apple: "/media/logo.png"
   },
   category: "music"

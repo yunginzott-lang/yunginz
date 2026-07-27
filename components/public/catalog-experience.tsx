@@ -57,7 +57,7 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
   const genres = Array.from(
     new Set(
       beats.flatMap((beat) =>
-        String(beat.genre)
+        (beat.genre ?? "")
           .split(",")
           .map((value) => value.trim())
           .filter(Boolean)
@@ -70,7 +70,7 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
       .filter((beat) =>
         genre === "all"
           ? true
-          : String(beat.genre)
+          : (beat.genre ?? "")
               .split(",")
               .map((value) => value.trim().toLowerCase())
               .includes(genre.toLowerCase())
@@ -382,7 +382,11 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
             <span />
           </div>
           <div className="grid gap-5 pt-4">
-            {paginatedBeats.map((beat) => (
+            {paginatedBeats.length === 0 ? (
+              <div className="py-16 text-center font-mono text-xs uppercase tracking-[0.3em] text-foreground/45">
+                No beats match your search or filters
+              </div>
+            ) : paginatedBeats.map((beat) => (
               <div
                 key={beat.id}
                 className="glass-card cursor-pointer rounded-[24px] border border-white/10 px-4 py-4 transition hover:border-primary/35 md:px-5"
@@ -440,16 +444,20 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
                       type="button"
                       onClick={async (event) => {
                         event.stopPropagation();
-                        const shareUrl = `${window.location.origin}/#beats`;
-                        if (navigator.share) {
-                          await navigator.share({
-                            title: beat.title,
-                            text: `Check out "${beat.title}" on Yunginz`,
-                            url: shareUrl
-                          });
-                        } else {
-                          await navigator.clipboard.writeText(shareUrl);
-                          toast.success("Beat link copied");
+                        try {
+                          const shareUrl = `${window.location.origin}/#beats`;
+                          if (navigator.share) {
+                            await navigator.share({
+                              title: beat.title,
+                              text: `Check out "${beat.title}" on Yunginz`,
+                              url: shareUrl
+                            });
+                          } else {
+                            await navigator.clipboard.writeText(shareUrl);
+                            toast.success("Beat link copied");
+                          }
+                        } catch {
+                          // user cancelled share dialog—ignore
                         }
                       }}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/12 text-primary transition hover:bg-primary hover:text-black"
@@ -519,12 +527,16 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
                       type="button"
                       onClick={async (event) => {
                         event.stopPropagation();
-                        const shareUrl = `${window.location.origin}/#beats`;
-                        if (navigator.share) {
-                          await navigator.share({ title: beat.title, url: shareUrl });
-                        } else {
-                          await navigator.clipboard.writeText(shareUrl);
-                          toast.success("Beat link copied");
+                        try {
+                          const shareUrl = `${window.location.origin}/#beats`;
+                          if (navigator.share) {
+                            await navigator.share({ title: beat.title, url: shareUrl });
+                          } else {
+                            await navigator.clipboard.writeText(shareUrl);
+                            toast.success("Beat link copied");
+                          }
+                        } catch {
+                          // user cancelled share dialog—ignore
                         }
                       }}
                       className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/25 bg-primary/12 text-primary transition hover:bg-primary hover:text-black"
@@ -772,12 +784,13 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
 }
 
 function cheapestPrice(beat: BeatItem) {
-  return beat.licenses
+  const min = beat.licenses
     .filter((license: any) => !license.licenseTemplate.isExclusive)
     .reduce((min: number, license: any) => {
-      const price = license.customPriceCents ?? license.licenseTemplate.priceCents ?? min;
+      const price = license.customPriceCents ?? license.licenseTemplate.priceCents ?? 0;
       return Math.min(min, price);
     }, Number.POSITIVE_INFINITY);
+  return Number.isFinite(min) ? min : 0;
 }
 
 function buildVisiblePages(currentPage: number, totalPages: number) {
@@ -802,7 +815,7 @@ function formatStoredDuration(seconds?: number | null) {
   }
 
   const mins = Math.floor(seconds / 60);
-  const secs = Math.round(seconds % 60)
+  const secs = Math.floor(seconds % 60)
     .toString()
     .padStart(2, "0");
 

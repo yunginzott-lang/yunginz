@@ -24,7 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
         "Browse Yunginz loop kits, sample packs, drum kits, and sound banks for modern producers.",
       url: `${baseUrl}/sound-kits`,
       siteName: "YUNG1NZ",
-      type: "website"
+      type: "website",
+      images: [{ url: `${baseUrl}/media/yunginz-yellow-hero.webp` }]
     }
   };
 }

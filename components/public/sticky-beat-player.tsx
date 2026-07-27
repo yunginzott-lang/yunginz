@@ -79,7 +79,19 @@ export function StickyBeatPlayer() {
 
     if (!activeBeat) return;
 
+    if (pathname?.startsWith("/admin")) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setPlaying(false);
+      return;
+    }
+
     if (!audioRef.current) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
       audioRef.current = new Audio(activeBeat.previewMp3Url);
       audioRef.current.preload = "auto";
       audioRef.current.volume = volume;
@@ -131,7 +143,8 @@ export function StickyBeatPlayer() {
     setDuration,
     setPlaying,
     setProgress,
-    volume
+    volume,
+    pathname
   ]);
 
   useEffect(() => {
@@ -141,6 +154,12 @@ export function StickyBeatPlayer() {
 
   useEffect(() => {
     if (!audioRef.current || !activeBeat) return;
+
+    if (pathname?.startsWith("/admin")) {
+      audioRef.current.pause();
+      setPlaying(false);
+      return;
+    }
 
     shouldPlayRef.current = isPlaying;
 
@@ -152,7 +171,7 @@ export function StickyBeatPlayer() {
     }
 
     audioRef.current.pause();
-  }, [activeBeat, isPlaying, setPlaying]);
+  }, [activeBeat, isPlaying, setPlaying, pathname]);
 
   useEffect(() => {
     if (!activeBeat) {

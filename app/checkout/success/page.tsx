@@ -56,64 +56,93 @@ export default async function CheckoutSuccessPage({
   }
 
   if (order.status !== "PAID") {
-    const capture = await capturePaypalOrder(token);
-    const amountPaidCents = Math.round(
-      Number(capture.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value ?? 0) * 100
-    );
+    let capture: Record<string, unknown> | null = null;
+    try {
+      capture = await capturePaypalOrder(token);
+    } catch {
+      order = await prisma.order.findUnique({
+        where: { paypalOrderId: token },
+        include: { customer: true, items: true }
+      });
 
-    if (amountPaidCents !== order.subtotalCents) {
-      return (
-        <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
-          <div className="section-kicker">Payment issue</div>
-          <h1 className="mt-6 text-6xl font-semibold uppercase text-[#f4efe7]">
-            Amount mismatch
-          </h1>
-          <p className="mt-4 text-2xl text-foreground/60">
-            Your payment was processed but the captured amount doesn&apos;t match the order
-            total. Please contact support with your order reference.
-          </p>
-        </main>
-      );
+      if (order?.status === "PAID") {
+        // webhook already processed it
+      } else {
+        return (
+          <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
+            <div className="section-kicker">Payment issue</div>
+            <h1 className="mt-6 text-6xl font-semibold uppercase text-[#f4efe7]">
+              Something went wrong
+            </h1>
+            <p className="mt-4 text-2xl text-foreground/60">
+              Your payment may have been processed. Please contact support with your order
+              reference and we&apos;ll sort it out.
+            </p>
+          </main>
+        );
+      }
     }
 
-    order = await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        status: "PAID",
-        amountPaidCents,
-        capturedAt: new Date(),
-        fulfillmentStatus: order.items.some((item) => item.manualFulfillmentRequired)
-          ? "PARTIAL"
-          : "DELIVERED"
-      },
-      include: {
-        customer: true,
-        items: true
-      }
-    });
+    if (order && capture) {
+      const amountPaidCents = Math.round(
+        Number((capture as any)?.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value ?? 0) * 100
+      );
 
-    const existingApprovalEvent = await prisma.paymentEvent.findFirst({
-      where: {
-        provider: "PAYPAL",
-        eventType: "CHECKOUT.ORDER.APPROVED",
-        providerId: token
+      if (amountPaidCents !== order.subtotalCents) {
+        return (
+          <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
+            <div className="section-kicker">Payment issue</div>
+            <h1 className="mt-6 text-6xl font-semibold uppercase text-[#f4efe7]">
+              Amount mismatch
+            </h1>
+            <p className="mt-4 text-2xl text-foreground/60">
+              Your payment was processed but the captured amount doesn&apos;t match the order
+              total. Please contact support with your order reference.
+            </p>
+          </main>
+        );
       }
-    });
 
-    if (!existingApprovalEvent) {
-      await prisma.paymentEvent.create({
+      const updated = await prisma.order.updateMany({
+        where: { id: order.id, status: "PENDING" },
         data: {
-          orderId: order.id,
-          eventType: "CHECKOUT.ORDER.APPROVED",
-          providerId: token,
-          rawPayload: capture
+          status: "PAID",
+          amountPaidCents,
+          capturedAt: new Date(),
+          fulfillmentStatus: order.items.some((item) => item.manualFulfillmentRequired)
+            ? "PARTIAL"
+            : "DELIVERED"
         }
       });
-    }
 
-    await sendPaidOrderNotifications(order);
-  } else if (order.status === "PAID") {
-    await sendPaidOrderNotifications(order);
+      if (updated.count > 0) {
+        order = await prisma.order.findUnique({
+          where: { id: order.id },
+          include: { customer: true, items: true }
+        })!;
+
+        const existingApprovalEvent = await prisma.paymentEvent.findFirst({
+          where: {
+            provider: "PAYPAL",
+            eventType: "CHECKOUT.ORDER.APPROVED",
+            providerId: token
+          }
+        });
+
+        if (!existingApprovalEvent) {
+          await prisma.paymentEvent.create({
+            data: {
+              orderId: order.id,
+              eventType: "CHECKOUT.ORDER.APPROVED",
+              providerId: token,
+              rawPayload: capture as any
+            }
+          });
+        }
+
+        await sendPaidOrderNotifications(order);
+      }
+    }
   }
 
   return (

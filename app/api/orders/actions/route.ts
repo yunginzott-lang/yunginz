@@ -62,10 +62,14 @@ export async function POST(request: Request) {
         note: refundNote || "Refund processed by store admin."
       });
 
-      await prisma.order.update({
-        where: { id },
+      const updated = await prisma.order.updateMany({
+        where: { id, status: "PAID" },
         data: { status: "REFUNDED" }
       });
+
+      if (updated.count === 0) {
+        return NextResponse.json({ error: "Order was already refunded" }, { status: 409 });
+      }
 
       await prisma.paymentEvent.create({
         data: {
@@ -91,10 +95,14 @@ export async function POST(request: Request) {
   }
 
   if (action === "markRefunded") {
-    await prisma.order.update({
-      where: { id },
+    const updated = await prisma.order.updateMany({
+      where: { id, status: { not: "REFUNDED" } },
       data: { status: "REFUNDED" }
     });
+
+    if (updated.count === 0) {
+      return NextResponse.json({ error: "Order is already refunded" }, { status: 409 });
+    }
 
     await prisma.paymentEvent.create({
       data: {

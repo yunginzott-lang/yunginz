@@ -47,7 +47,7 @@ export function SiteHeader() {
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-10">
-        <Link href="#top" prefetch={false} className="flex items-center gap-3">
+        <Link href="/" prefetch={false} className="flex items-center gap-3">
           <Image
             src="/media/logo.webp"
             alt="Yunginz logo"
@@ -85,13 +85,8 @@ export function SiteHeader() {
               </span>
             ) : null}
           </Link>
-          <Button
-            className="h-10 px-6 py-2 text-xs"
-            onClick={() =>
-              document.getElementById("beats")?.scrollIntoView({ behavior: "smooth" })
-            }
-          >
-            Get A Beat
+          <Button className="h-10 px-6 py-2 text-xs" asChild>
+            <Link href="/#beats">Get A Beat</Link>
           </Button>
         </nav>
 

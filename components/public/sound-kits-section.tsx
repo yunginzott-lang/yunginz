@@ -33,10 +33,12 @@ type SoundKitItem = {
 
 export function SoundKitsSection({
   soundKits,
-  showAllLink = true
+  showAllLink = true,
+  showEmptyState = false
 }: {
   soundKits: SoundKitItem[];
   showAllLink?: boolean;
+  showEmptyState?: boolean;
 }) {
   const addItem = useCartStore((state) => state.addItem);
   const [activeKit, setActiveKit] = useState<SoundKitItem | null>(null);
@@ -50,6 +52,15 @@ export function SoundKitsSection({
   const hasMoreKits = soundKits.length > 5;
 
   if (!soundKits.length) {
+    if (showEmptyState) {
+      return (
+        <section className="mx-auto max-w-7xl px-6 py-24">
+          <div className="text-center font-mono text-xs uppercase tracking-[0.3em] text-foreground/45">
+            No sound kits available yet
+          </div>
+        </section>
+      );
+    }
     return null;
   }
 

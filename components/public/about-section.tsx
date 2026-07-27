@@ -46,8 +46,8 @@ export function AboutSection({
             {section?.title ?? "Built from the ground up"}
           </h2>
           <div className="space-y-4 text-[0.95rem] leading-relaxed text-foreground/76 md:text-[1rem] lg:text-[1.12rem]">
-            <p>{content.body}</p>
-            <p>{content.body2}</p>
+            {content.body ? <p>{content.body}</p> : null}
+            {content.body2 ? <p>{content.body2}</p> : null}
           </div>
           <div className="flex flex-wrap gap-3 pt-2">
             {pills.map((pill) => (
