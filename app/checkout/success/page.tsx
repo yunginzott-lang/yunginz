@@ -86,6 +86,21 @@ export default async function CheckoutSuccessPage({
     }
 
     if (capturedSuccessfully && capture) {
+      if (!order) {
+        return (
+          <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-24">
+            <div className="section-kicker">Payment issue</div>
+            <h1 className="mt-6 text-6xl font-semibold uppercase text-[#f4efe7]">
+              Something went wrong
+            </h1>
+            <p className="mt-4 text-2xl text-foreground/60">
+              Your payment was processed but we couldn&apos;t find your order. Please contact
+              support.
+            </p>
+          </main>
+        );
+      }
+
       const amountPaidCents = Math.round(
         Number((capture as any)?.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value ?? 0) * 100
       );
