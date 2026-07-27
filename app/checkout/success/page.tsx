@@ -162,6 +162,10 @@ export default async function CheckoutSuccessPage({
     }
   }
 
+  if (!order) {
+    notFound();
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-6 py-24">
       <div className="section-kicker">Order confirmed</div>
