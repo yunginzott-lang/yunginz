@@ -38,7 +38,6 @@ body {
     radial-gradient(circle at 55% 65%, rgba(247, 195, 0, 0.08), transparent 18%),
     linear-gradient(180deg, rgba(255,255,255,0.02), transparent 18%);
   font-family: var(--font-barlow-condensed), sans-serif;
-  will-change: transform;
 }
 
 .hero-video {
@@ -89,7 +88,7 @@ a {
 }
 
 .modal-backdrop {
-  @apply fixed inset-0 z-[120] overflow-y-auto bg-black/75 px-4 py-8 backdrop-blur-sm;
+  @apply fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm;
   animation: modal-fade 0.22s ease-out;
 }
 
