@@ -56,10 +56,10 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
 
   const genres = Array.from(
     new Set(
-      beats.flatMap((beat) =>
-        (beat.genre ?? "")
+      beats.flatMap((beat: any) =>
+        ((beat.genre ?? "") as string)
           .split(",")
-          .map((value) => value.trim())
+          .map((value: string) => value.trim())
           .filter(Boolean)
       )
     )
@@ -72,7 +72,7 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
           ? true
           : (beat.genre ?? "")
               .split(",")
-              .map((value) => value.trim().toLowerCase())
+              .map((value: string) => value.trim().toLowerCase())
               .includes(genre.toLowerCase())
       )
       .filter((beat) => {

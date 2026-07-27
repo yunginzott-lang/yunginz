@@ -87,53 +87,45 @@ export function StickyBeatPlayer() {
       return;
     }
 
-    if (!audioRef.current) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      }
-      audioRef.current = new Audio(activeBeat.previewMp3Url);
-      audioRef.current.preload = "auto";
-      audioRef.current.volume = volume;
-      shouldPlayRef.current = isPlaying;
-      setDuration(normalizeDuration(activeBeat.durationSeconds, 0));
-      audioRef.current.addEventListener("loadedmetadata", () => {
-        if (!audioRef.current) return;
-        setDuration(normalizeDuration(audioRef.current.duration, durationFallbackRef.current));
-      });
-      audioRef.current.addEventListener("canplay", () => {
-        if (!audioRef.current || !shouldPlayRef.current) return;
-        audioRef.current.play().catch(() => setPlaying(false));
-      });
-      audioRef.current.addEventListener("timeupdate", () => {
-        if (!audioRef.current) return;
-        const nextDuration = normalizeDuration(audioRef.current.duration, durationFallbackRef.current);
-        setDuration(nextDuration);
-        setCurrentTime(audioRef.current.currentTime);
-        setProgress(
-          nextDuration ? (audioRef.current.currentTime / nextDuration) * 100 : 0
-        );
-      });
-      audioRef.current.addEventListener("ended", () => {
-        setPlaying(false);
-        if (queueRef.current.length > 1) {
-          const next =
-            queueRef.current[
-              (activeIndexRef.current + 1 + queueRef.current.length) % queueRef.current.length
-            ];
-          setActiveBeat(next.id);
-          setPlaying(true);
-        }
-      });
-    } else if (audioRef.current.src !== activeBeat.previewMp3Url) {
+    if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.src = activeBeat.previewMp3Url;
-      audioRef.current.load();
-      shouldPlayRef.current = isPlaying;
-      setProgress(0);
-      setCurrentTime(0);
-      setDuration(normalizeDuration(activeBeat.durationSeconds, 0));
+      audioRef.current.src = "";
+      audioRef.current = null;
     }
+
+    audioRef.current = new Audio(activeBeat.previewMp3Url);
+    audioRef.current.preload = "auto";
+    audioRef.current.volume = volume;
+    shouldPlayRef.current = isPlaying;
+    setDuration(normalizeDuration(activeBeat.durationSeconds, 0));
+    audioRef.current.addEventListener("loadedmetadata", () => {
+      if (!audioRef.current) return;
+      setDuration(normalizeDuration(audioRef.current.duration, durationFallbackRef.current));
+    });
+    audioRef.current.addEventListener("canplay", () => {
+      if (!audioRef.current || !shouldPlayRef.current) return;
+      audioRef.current.play().catch(() => setPlaying(false));
+    });
+    audioRef.current.addEventListener("timeupdate", () => {
+      if (!audioRef.current) return;
+      const nextDuration = normalizeDuration(audioRef.current.duration, durationFallbackRef.current);
+      setDuration(nextDuration);
+      setCurrentTime(audioRef.current.currentTime);
+      setProgress(
+        nextDuration ? (audioRef.current.currentTime / nextDuration) * 100 : 0
+      );
+    });
+    audioRef.current.addEventListener("ended", () => {
+      setPlaying(false);
+      if (queueRef.current.length > 1) {
+        const next =
+          queueRef.current[
+            (activeIndexRef.current + 1 + queueRef.current.length) % queueRef.current.length
+          ];
+        setActiveBeat(next.id);
+        setPlaying(true);
+      }
+    });
   }, [
     activeBeat,
     activeIndex,
