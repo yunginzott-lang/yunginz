@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
@@ -34,17 +35,24 @@ export function OrderActions({
   }
 
   async function handleAction(action: string, body: Record<string, string>) {
-    const res = await fetch("/api/orders/actions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, ...body })
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/orders/actions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, ...body })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success(data.message ?? "Order updated.");
+          router.refresh();
+        } else {
+          toast.error(data.error || "Action failed. Please try again.");
+        }
+      } catch {
+        toast.error("Network error. Please try again.");
+      }
     });
-    const data = await res.json();
-    if (res.ok) {
-      startTransition(() => router.refresh());
-    } else {
-      alert(data.error || "Action failed. Please try again.");
-    }
   }
 
   return (

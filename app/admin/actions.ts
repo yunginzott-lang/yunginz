@@ -19,10 +19,13 @@ function parseStringList(input: FormDataEntryValue | null) {
 }
 
 function parseJson(input: FormDataEntryValue | null, fallback: unknown = {}) {
+  const raw = String(input ?? "").trim();
+  if (!raw) return fallback;
+
   try {
-    return JSON.parse(String(input ?? "")) || fallback;
+    return JSON.parse(raw);
   } catch {
-    return fallback;
+    throw new Error("Invalid JSON. Fix the JSON before saving.");
   }
 }
 

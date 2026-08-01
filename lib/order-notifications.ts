@@ -52,31 +52,38 @@ export async function sendPaidOrderNotifications(order: PaidOrder) {
     return;
   }
 
-  const sent = await sendAdminNotification({
-    subject: `New paid Yunginz order ${order.publicId}`,
-    preview: `${order.customer.name} purchased ${order.items.length} item(s).`,
-    lines: [
-      `Order: ${order.publicId}`,
-      `Customer: ${order.customer.name} <${order.customer.email}>`,
-      `Total: ${formatCurrency(order.amountPaidCents ?? order.subtotalCents)}`,
-      `Items: ${order.items.map(getOrderItemLabel).join(" | ")}`,
-      `Fulfillment: ${order.fulfillmentStatus}`
-    ]
-  });
+  try {
+    const sent = await sendAdminNotification({
+      subject: `New paid Yunginz order ${order.publicId}`,
+      preview: `${order.customer.name} purchased ${order.items.length} item(s).`,
+      lines: [
+        `Order: ${order.publicId}`,
+        `Customer: ${order.customer.name} <${order.customer.email}>`,
+        `Total: ${formatCurrency(order.amountPaidCents ?? order.subtotalCents)}`,
+        `Items: ${order.items.map(getOrderItemLabel).join(" | ")}`,
+        `Fulfillment: ${order.fulfillmentStatus}`
+      ]
+    });
 
-  if (sent) {
-    await prisma.paymentEvent.create({
-      data: {
-        orderId: order.id,
-        provider: "INTERNAL",
-        eventType: "ORDER.ADMIN_NOTIFICATION_SENT",
-        providerId: order.id,
-        rawPayload: {
-          publicId: order.publicId,
-          customerEmail: order.customer.email,
-          sentAt: new Date().toISOString()
+    if (sent) {
+      await prisma.paymentEvent.create({
+        data: {
+          orderId: order.id,
+          provider: "INTERNAL",
+          eventType: "ORDER.ADMIN_NOTIFICATION_SENT",
+          providerId: order.id,
+          rawPayload: {
+            publicId: order.publicId,
+            customerEmail: order.customer.email,
+            sentAt: new Date().toISOString()
+          }
         }
-      }
+      });
+    }
+  } catch (error) {
+    console.error("Admin notification failed", {
+      orderId: order.id,
+      error
     });
   }
 }

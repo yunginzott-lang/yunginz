@@ -45,24 +45,40 @@ export function CheckoutPageClient() {
   );
 
   function beginCheckout() {
+    if (!items.length) {
+      toast.error("Your cart is empty.");
+      return;
+    }
+
     startTransition(async () => {
-      const response = await fetch("/api/checkout/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items,
-          ...form
-        })
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
 
-      const payload = await response.json();
+      try {
+        const response = await fetch("/api/checkout/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items,
+            ...form
+          }),
+          signal: controller.signal
+        });
 
-      if (!response.ok || !payload.approvalUrl) {
-        toast.error(payload.error ?? "Unable to start checkout.");
-        return;
+        clearTimeout(timeout);
+
+        const payload = await response.json();
+
+        if (!response.ok || !payload.approvalUrl) {
+          toast.error(payload.error ?? "Unable to start checkout. Please try again.");
+          return;
+        }
+
+        window.location.href = payload.approvalUrl;
+      } catch {
+        clearTimeout(timeout);
+        toast.error("Network error starting checkout. Please try again.");
       }
-
-      window.location.href = payload.approvalUrl;
     });
   }
 

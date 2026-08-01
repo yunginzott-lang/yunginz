@@ -118,6 +118,12 @@ export async function POST(request: Request) {
       description: `Yunginz order ${publicId}`
     });
 
+    const approvalUrl = paypalOrder.links?.find((link: any) => link.rel === "approve")?.href;
+
+    if (!approvalUrl) {
+      throw new Error("PayPal did not return an approval link. Please try again in a moment.");
+    }
+
     const order = await prisma.order.create({
       data: {
         publicId,
@@ -175,18 +181,6 @@ export async function POST(request: Request) {
         }))
       ]
     });
-
-    const approvalUrl = paypalOrder.links?.find((link: any) => link.rel === "approve")?.href;
-
-    if (!approvalUrl) {
-      return NextResponse.json(
-        {
-          error:
-            "PayPal did not return an approval link. Please try again in a moment."
-        },
-        { status: 502 }
-      );
-    }
 
     return NextResponse.json({ approvalUrl });
   } catch (error) {

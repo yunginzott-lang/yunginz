@@ -20,7 +20,7 @@ import { TurnstileField } from "@/components/ui/turnstile-field";
 
 type BeatItem = any;
 
-export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[] }) {
+export function CatalogExperience({ beats }: { beats: BeatItem[] }) {
   const pageSize = 8;
   const bpmMarks = [50, 95, 140, 180, 225] as const;
   const bpmMinBound = bpmMarks[0];
@@ -90,9 +90,9 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
     if (sort === "title") {
       catalog.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sort === "price-asc") {
-      catalog.sort((a, b) => cheapestPrice(a) - cheapestPrice(b));
+      catalog.sort((a, b) => (cheapestPrice(a) ?? Infinity) - (cheapestPrice(b) ?? Infinity));
     } else if (sort === "price-desc") {
-      catalog.sort((a, b) => cheapestPrice(b) - cheapestPrice(a));
+      catalog.sort((a, b) => (cheapestPrice(b) ?? -Infinity) - (cheapestPrice(a) ?? -Infinity));
     } else if (sort === "oldest") {
       catalog.reverse();
     }
@@ -257,37 +257,44 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
     if (!selectedBeat) return;
 
     setSubmittingOffer(true);
-    const response = await fetch("/api/exclusive-offers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        beatId: selectedBeat.id,
-        name: offerForm.name,
-        email: offerForm.email,
-        phone: offerForm.phone,
-        offerAmountCents: offerForm.offerAmount * 100,
-        message: offerForm.message,
-        turnstileToken: offerForm.turnstileToken
-      })
-    });
-    setSubmittingOffer(false);
+    try {
+      const response = await fetch("/api/exclusive-offers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          beatId: selectedBeat.id,
+          name: offerForm.name,
+          email: offerForm.email,
+          phone: offerForm.phone,
+          offerAmountCents: offerForm.offerAmount * 100,
+          message: offerForm.message,
+          turnstileToken: offerForm.turnstileToken
+        })
+      });
 
-    if (!response.ok) {
-      toast.error("Unable to send offer.");
-      return;
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        toast.error(payload?.error ?? "Unable to send offer. Please try again.");
+        return;
+      }
+
+      setOfferOpen(false);
+      setSelectedBeat(null);
+      setOfferForm({
+        name: "",
+        email: "",
+        phone: "",
+        offerAmount: 1000,
+        message: "",
+        turnstileToken: ""
+      });
+      toast.success("Offer sent successfully.");
+    } catch {
+      toast.error("Network error sending offer. Please try again.");
+    } finally {
+      setSubmittingOffer(false);
     }
-
-    setOfferOpen(false);
-    setSelectedBeat(null);
-    setOfferForm({
-      name: "",
-      email: "",
-      phone: "",
-      offerAmount: 1000,
-      message: "",
-      turnstileToken: ""
-    });
-    toast.success("Offer sent successfully.");
   }
 
   return (
@@ -296,7 +303,7 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
         <div className="space-y-4">
           <div className="section-kicker">The catalog</div>
           <h2 className="text-4xl font-semibold uppercase leading-[0.95] text-[#f4efe7] md:text-6xl">
-            Featured beats
+            All beats
           </h2>
         </div>
 
@@ -438,7 +445,11 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
                       aria-label={`Choose license for ${beat.title}`}
                     >
                       <ShoppingBag className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{formatCurrency(cheapestPrice(beat))}</span>
+                      <span className="truncate">
+                        {cheapestPrice(beat) !== null
+                          ? formatCurrency(cheapestPrice(beat)!)
+                          : "Offer"}
+                      </span>
                     </button>
                     <button
                       type="button"
@@ -521,7 +532,9 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
                       aria-label={`Choose license for ${beat.title}`}
                     >
                       <ShoppingBag className="h-4 w-4" />
-                      {formatCurrency(cheapestPrice(beat))}
+                      {cheapestPrice(beat) !== null
+                        ? formatCurrency(cheapestPrice(beat)!)
+                        : "Offer"}
                     </button>
                     <button
                       type="button"
@@ -783,14 +796,14 @@ export function CatalogExperience({ beats }: { beats: BeatItem[]; licenses: any[
   );
 }
 
-function cheapestPrice(beat: BeatItem) {
+function cheapestPrice(beat: BeatItem): number | null {
   const min = beat.licenses
     .filter((license: any) => !license.licenseTemplate.isExclusive)
     .reduce((min: number, license: any) => {
       const price = license.customPriceCents ?? license.licenseTemplate.priceCents ?? 0;
       return Math.min(min, price);
     }, Number.POSITIVE_INFINITY);
-  return Number.isFinite(min) ? min : 0;
+  return Number.isFinite(min) ? min : null;
 }
 
 function buildVisiblePages(currentPage: number, totalPages: number) {

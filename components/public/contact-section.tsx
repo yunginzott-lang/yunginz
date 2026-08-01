@@ -43,27 +43,31 @@ export function ContactSection({
     event.preventDefault();
 
     startTransition(async () => {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
-      });
+      try {
+        const response = await fetch("/api/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form)
+        });
 
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        toast.error(payload.error ?? "We couldn't send your inquiry.");
-        return;
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          toast.error(payload.error ?? "We couldn't send your inquiry.");
+          return;
+        }
+
+        toast.success("Inquiry sent. We'll tap in shortly.");
+        setForm({
+          name: "",
+          email: "",
+          inquiryType: "Custom Beat",
+          subject: "",
+          message: "",
+          turnstileToken: ""
+        });
+      } catch {
+        toast.error("Network error sending your inquiry. Please try again.");
       }
-
-      toast.success("Inquiry sent. We'll tap in shortly.");
-      setForm({
-        name: "",
-        email: "",
-        inquiryType: "Custom Beat",
-        subject: "",
-        message: "",
-        turnstileToken: ""
-      });
     });
   }
 

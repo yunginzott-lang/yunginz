@@ -190,29 +190,43 @@ export async function sendOrderEmail(args: {
     </BaseEmail>
   );
 
-  const attachments = await Promise.all(
+  const settledAttachments = await Promise.allSettled(
     args.order.items
       .filter((item) => item.productType === "BEAT_LICENSE")
       .map(async (item) => {
-      const bytes = await generateLeasePdf({
-        licenseCode: normalizeLicenseCode(item.licenseNameSnapshot),
-        licenseName: item.licenseNameSnapshot,
-        beatTitle: item.beatTitleSnapshot,
-        producerName: "Yunginz",
-        buyerName: args.customerName,
-        buyerEmail: args.customerEmail,
-        buyerAddress: args.order.customer.address ?? undefined,
-        priceLabel: formatCurrency(item.priceCentsSnapshot),
-        purchasedAt: args.order.capturedAt ?? args.order.createdAt,
-        rights: (item.rightsJsonSnapshot ?? {}) as LicenseRightsSnapshot
-      });
+        const bytes = await generateLeasePdf({
+          licenseCode: normalizeLicenseCode(item.licenseNameSnapshot),
+          licenseName: item.licenseNameSnapshot,
+          beatTitle: item.beatTitleSnapshot,
+          producerName: "Yunginz",
+          buyerName: args.customerName,
+          buyerEmail: args.customerEmail,
+          buyerAddress: args.order.customer.address ?? undefined,
+          priceLabel: formatCurrency(item.priceCentsSnapshot),
+          purchasedAt: args.order.capturedAt ?? args.order.createdAt,
+          rights: (item.rightsJsonSnapshot ?? {}) as LicenseRightsSnapshot
+        });
 
-      return {
-        filename: `${item.beatTitleSnapshot}-${item.licenseNameSnapshot}.pdf`,
-        content: Buffer.from(bytes).toString("base64")
-      };
-    })
+        return {
+          filename: `${item.beatTitleSnapshot}-${item.licenseNameSnapshot}.pdf`,
+          content: Buffer.from(bytes).toString("base64")
+        };
+      })
   );
+
+  const attachments = settledAttachments.flatMap((result, index) => {
+    if (result.status === "rejected") {
+      console.error("Lease PDF generation failed for an order item", {
+        orderId: args.order.publicId,
+        item: args.order.items
+          .filter((item) => item.productType === "BEAT_LICENSE")
+          [index]?.beatTitleSnapshot,
+        error: result.reason
+      });
+      return [];
+    }
+    return [result.value];
+  });
 
   const response = await resend!.emails.send({
     from: cfg.from,

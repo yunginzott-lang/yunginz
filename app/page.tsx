@@ -118,7 +118,7 @@ export default async function HomePage() {
       <HeroSection section={hero} settings={data.settings} />
       <AboutSection section={about} />
       <Suspense fallback={<div className="px-6 py-24 text-center text-foreground/60">Loading beats...</div>}>
-        <CatalogExperience beats={data.beats} licenses={data.licenses} />
+        <CatalogExperience beats={data.beats} />
       </Suspense>
       <SoundKitsSection soundKits={data.soundKits} />
       <PricingSection licenses={data.licenses} />

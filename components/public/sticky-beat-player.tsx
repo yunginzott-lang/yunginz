@@ -25,6 +25,7 @@ import { usePlayerStore } from "@/lib/player";
 
 export function StickyBeatPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const currentSrcRef = useRef<string | null>(null);
   const queueRef = useRef<any[]>([]);
   const activeIndexRef = useRef(-1);
   const durationFallbackRef = useRef(0);
@@ -87,13 +88,19 @@ export function StickyBeatPlayer() {
       return;
     }
 
+    const src = activeBeat.previewMp3Url;
+    if (audioRef.current && currentSrcRef.current === src) {
+      return;
+    }
+
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = "";
       audioRef.current = null;
     }
 
-    audioRef.current = new Audio(activeBeat.previewMp3Url);
+    currentSrcRef.current = src;
+    audioRef.current = new Audio(src);
     audioRef.current.preload = "auto";
     audioRef.current.volume = volume;
     shouldPlayRef.current = isPlaying;
@@ -126,18 +133,7 @@ export function StickyBeatPlayer() {
         setPlaying(true);
       }
     });
-  }, [
-    activeBeat,
-    activeIndex,
-    queue,
-    setActiveBeat,
-    setCurrentTime,
-    setDuration,
-    setPlaying,
-    setProgress,
-    volume,
-    pathname
-  ]);
+  }, [activeBeat, pathname, volume, setActiveBeat, setCurrentTime, setDuration, setPlaying, setProgress, isPlaying]);
 
   useEffect(() => {
     if (!audioRef.current) return;

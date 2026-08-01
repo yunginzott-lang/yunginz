@@ -11,7 +11,7 @@ export function Footer({ settings }: { settings: any }) {
           <span className="text-primary">Productions</span>
         </div>
         <div className="font-mono text-xs uppercase tracking-[0.3em] text-foreground/30">
-          (c) {new Date().getFullYear()} Yunginz. All rights reserved.
+          © {new Date().getFullYear()} Yunginz. All rights reserved.
         </div>
         <div className="flex flex-wrap gap-6">
           {policies.map((policy) => (

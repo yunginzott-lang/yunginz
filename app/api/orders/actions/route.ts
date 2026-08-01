@@ -95,8 +95,12 @@ export async function POST(request: Request) {
   }
 
   if (action === "markRefunded") {
+    if (order.status !== "PAID") {
+      return NextResponse.json({ error: "Only paid orders can be marked refunded" }, { status: 400 });
+    }
+
     const updated = await prisma.order.updateMany({
-      where: { id, status: { not: "REFUNDED" } },
+      where: { id, status: "PAID" },
       data: { status: "REFUNDED" }
     });
 

@@ -6,6 +6,7 @@ import { DeleteBeatForm } from "@/components/admin/delete-beat-form";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -92,6 +93,12 @@ export default async function AdminDashboardPage({
                     <option value="SOLD">Sold</option>
                   </Select>
                 </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 text-sm text-foreground/80">
+                    <Checkbox name="isFeatured" />
+                    Featured on homepage
+                  </label>
+                </div>
                 <div className="lg:col-span-2">
                   <Label>Tags (comma separated)</Label>
                   <Input name="tags" list="tag-suggestions" />
@@ -139,8 +146,11 @@ export default async function AdminDashboardPage({
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs uppercase tracking-[0.22em] text-foreground/45">
               <div>
-                Showing {(data.currentPage - 1) * data.pageSize + (data.beats.length ? 1 : 0)}-
-                {(data.currentPage - 1) * data.pageSize + data.beats.length} of {data.totalBeats}
+                {data.beats.length
+                  ? `Showing ${(data.currentPage - 1) * data.pageSize + 1}-${
+                      (data.currentPage - 1) * data.pageSize + data.beats.length
+                    } of ${data.totalBeats}`
+                  : "No beats found"}
               </div>
               <div>15 beats per page</div>
             </div>
@@ -206,6 +216,12 @@ export default async function AdminDashboardPage({
                           <option value="PUBLISHED">Published</option>
                           <option value="SOLD">Sold</option>
                         </Select>
+                      </div>
+                      <div className="flex items-end">
+                        <label className="flex items-center gap-2 text-sm text-foreground/80">
+                          <Checkbox name="isFeatured" defaultChecked={beat.isFeatured} />
+                          Featured on homepage
+                        </label>
                       </div>
                       <div className="lg:col-span-2">
                         <Label>Tags (comma separated)</Label>
